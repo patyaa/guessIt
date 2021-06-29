@@ -65,7 +65,8 @@ class GameFragment : Fragment() {
             updateScoreText()
             updateWordText()
         }
-
+        updateScoreText()
+        updateWordText()
         return binding.root
     }
 
