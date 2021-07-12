@@ -20,7 +20,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,7 +36,6 @@ import com.example.android.guesstheword.databinding.GameFragmentBinding
  * Fragment where the game is played
  */
 class GameFragment : Fragment() {
-
     private lateinit var viewModel: GameViewModel
 
     private lateinit var binding: GameFragmentBinding
@@ -54,24 +52,22 @@ class GameFragment : Fragment() {
             container,
             false
         )
-
-        Log.i("GameFragment", "viewModelProvider called")
         viewModel = ViewModelProvider(this).get(GameViewModel::class.java)
-
         binding.gameViewModel = viewModel
+        binding.lifecycleOwner = this
 
-        viewModel.word.observe(viewLifecycleOwner, Observer { newWord ->
-            binding.wordText.text = newWord.toString()
-        })
-
-        viewModel.score.observe(viewLifecycleOwner, Observer { newScore ->
-            binding.scoreText.text = newScore.toString()
-        })
-
+        //Sets up event listening to navigate the player when the game is finished
         viewModel.eventGameFinish.observe(viewLifecycleOwner, Observer { hasFinished ->
             if(hasFinished){
                 gameFinished()
                 viewModel.onGameFinishComplete()
+            }
+        })
+
+        viewModel.eventBuzz.observe(viewLifecycleOwner, Observer { buzzType ->
+            if (buzzType != BuzzType.NO_BUZZ) {
+                buzz(buzzType.pattern)
+                viewModel.onBuzzComplete()
             }
         })
         return binding.root
@@ -88,12 +84,12 @@ class GameFragment : Fragment() {
     private fun buzz(pattern: LongArray){
         val buzzer = activity?.getSystemService<Vibrator>()
 
-        buzzer.let {
+        buzzer?.let {
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                buzzer?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                buzzer.vibrate(VibrationEffect.createWaveform(pattern, -1))
             }
             else{
-                buzzer?.vibrate(pattern, -1)
+                buzzer.vibrate(pattern, -1)
             }
         }
     }
